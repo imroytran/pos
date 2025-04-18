@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Page</title>
+</head>
+<body>
+    <h1>Debug Invoices</h1>
+    <div id="debug"></div>
+
+    <script>
+        async function testFetch() {
+            try {
+                console.log('Starting fetch test...');
+                const response = await fetch('/api/invoices');
+                console.log('Response:', response);
+                const data = await response.json();
+                console.log('Data:', data);
+                document.getElementById('debug').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('debug').innerHTML = 
+                    'Error: ' + error.message;
+            }
+        }
+
+        testFetch();
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "stationery-pos",
+  "version": "1.0.0",
+  "description": "Simple POS system with MongoDB Atlas",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "setup-db": "node scripts/setup-mongodb.js",
+    "migrate": "node scripts/migrate-sheets-to-mongodb.js"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "googleapis": "^118.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^5.9.1",
+    "mongoose": "^7.6.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

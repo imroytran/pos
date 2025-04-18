@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý bán hàng văn phòng phẩm</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .user-name {
+            font-weight: bold;
+        }
+        .logout-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .change-password-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info">
+        <span class="user-name" id="userFullName"></span>
+        <button class="change-password-btn" onclick="location.href='/change-password'">Thay đổi mật khẩu</button>
+        <button class="logout-btn" onclick="logout()">Đăng xuất</button>
+    </div>
+    <h1>Quản lý bán hàng văn phòng phẩm</h1>
+    
+    <!-- Modal hiển thị chi tiết hóa đơn -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Chi tiết hóa đơn</h2>
+                <button class="close-button" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="invoice-meta">
+                <div class="invoice-date">
+                    <strong>Ngày:</strong> <span id="modalInvoiceDate"></span>
+                </div>
+                <div class="invoice-number">
+                    <strong>Mã hóa đơn:</strong> <span id="modalInvoiceId"></span>
+                </div>
+            </div>
+            <div class="invoice-items">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalInvoiceItems">
+                        <!-- Items will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="invoice-total" id="modalInvoiceTotal">
+                Tổng cộng: 0 VNĐ
+            </div>
+            <button class="print-button" onclick="printModalInvoice()">
+                In hóa đơn
+            </button>
+        </div>
+    </div>
+    
+    <div class="tab-container">
+        <button class="tab-button active" onclick="showTab('pos')">Bán hàng</button>
+        <button class="tab-button" onclick="showTab('products')">Quản lý sản phẩm</button>
+        <button class="tab-button" onclick="showTab('history')">Lịch sử hóa đơn</button>
+    </div>
+
+    <!-- Tab Bán hàng -->
+    <div id="pos" class="tab-content active">
+        <div class="container">
+            <div class="invoice-section">
+                <h2>Tạo hóa đơn mới</h2>
+                <input type="text" class="barcode-input" id="barcodeInput" placeholder="Quét mã vạch hoặc nhập mã sản phẩm..." autofocus>
+                <div class="quick-search">
+                    <input type="text" id="posSearchInput" placeholder="Tìm sản phẩm nhanh..." />
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                <table id="invoiceTable">
+                    <thead>
+                        <tr>
+                            <th>Tên SP</th>
+                            <th>Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Thành tiền</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="total" id="total">Tổng cộng: 0 VNĐ</div>
+                <div class="invoice-actions">
+                    <button onclick="saveInvoice()" class="primary-button">Lưu hóa đơn</button>
+                    <button onclick="printInvoice()">In hóa đơn</button>
+                    <button onclick="clearInvoice()">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab Quản lý sản phẩm -->
+    <div id="products" class="tab-content">
+        <h2>Quản lý sản phẩm</h2>
+        
+        <!-- Form thêm/sửa sản phẩm -->
+        <div class="product-form" id="productForm">
+            <h3 id="formTitle">Thêm sản phẩm mới</h3>
+            <div>
+                <input type="text" id="productIdBarcode" placeholder="Mã sản phẩm / Mã vạch" required>
+                <input type="text" id="productName" placeholder="Tên sản phẩm" required>
+                <input type="number" id="productPrice" placeholder="Giá" required>
+                <input type="number" id="productStock" placeholder="Tồn kho" required>
+            </div>
+            <div class="button-group">
+                <button onclick="saveProduct()" class="primary-button">Lưu</button>
+                <button onclick="resetForm()">Hủy</button>
+            </div>
+            <div id="formMessage"></div>
+        </div>
+
+        <div class="product-filters">
+            <input type="text" class="search" id="searchInput" placeholder="Tìm kiếm sản phẩm...">
+            <div class="filter-options">
+                <label>
+                    <input type="checkbox" id="filterLowStock" onchange="applyFilters()">
+                    Sản phẩm sắp hết
+                </label>
+            </div>
+        </div>
+        
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th>Mã SP / Mã vạch</th>
+                    <th>Tên</th>
+                    <th>Giá</th>
+                    <th>Tồn kho</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="history" class="tab-content">
+        <h2>Lịch sử hóa đơn</h2>
+        
+        <!-- Thống kê tổng thu nhập theo ngày -->
+        <div class="income-stats">
+            <div class="stats-header">
+                <h3>Thống kê thu nhập</h3>
+                <div class="date-filter">
+                    <label for="dateFilter">Chọn ngày: </label>
+                    <input type="date" id="dateFilter" onchange="filterInvoicesByDate()">
+                    <button onclick="resetDateFilter()">Xem tất cả</button>
+                </div>
+            </div>
+            <div class="stats-cards">
+                <div class="stat-card" id="todayIncome">
+                    <div class="stat-title">Hôm nay</div>
+                    <div class="stat-value">0 VNĐ</div>
+                </div>
+                <div class="stat-card" id="yesterdayIncome">
+                    <div class="stat-title">Hôm qua</div>
+                    <div class="stat-value">0 VNĐ</div>
+                </div>
+                <div class="stat-card" id="weekIncome">
+                    <div class="stat-title">7 ngày qua</div>
+                    <div class="stat-value">0 VNĐ</div>
+                </div>
+                <div class="stat-card" id="monthIncome">
+                    <div class="stat-title">Tháng này</div>
+                    <div class="stat-value">0 VNĐ</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="invoices-view-options">
+            <h3>Danh sách hóa đơn</h3>
+            <div class="view-options">
+                <label>
+                    <input type="checkbox" id="showTodayOnly" checked onchange="toggleTodayOnly()">
+                    Chỉ hiển thị hóa đơn hôm nay
+                </label>
+                <div id="selectedDateDisplay" class="selected-date-display">
+                    Đang hiển thị: Hôm nay
+                </div>
+            </div>
+        </div>
+        
+        <div id="invoicesList">
+            <table id="invoicesTable">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Số mặt hàng</th>
+                        <th>Tổng tiền</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4">Đang tải...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Import JavaScript files -->
+    <script src="js/main.js"></script>
+    <script src="js/product.js"></script>
+    <script src="js/invoice.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/auth.js"></script>
+    
+    <script>
+        // Kiểm tra xác thực khi tải trang
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+
+        // Hiển thị thông tin người dùng
+        function displayUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (user.fullName) {
+                document.getElementById('userFullName').textContent = user.fullName;
+            }
+        }
+
+        // Đăng xuất
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>
